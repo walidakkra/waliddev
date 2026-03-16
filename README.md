@@ -25,7 +25,7 @@
 - `WpfTaskManager/MainWindow.xaml`: واجهة المستخدم.
 
 ## التشغيل
-> يتطلب .NET SDK على ويندوز.
+> يتطلب .NET 10 SDK على ويندوز.
 
 ```bash
 cd WpfTaskManager

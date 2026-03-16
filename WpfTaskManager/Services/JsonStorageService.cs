@@ -12,25 +12,25 @@ public class JsonStorageService
     {
         var appFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WpfTaskManager");
         Directory.CreateDirectory(appFolder);
-        _dataFilePath = Path.Combine(appFolder, "tasks.json");
+        _dataFilePath = Path.Combine(appFolder, "transport-data.json");
     }
 
-    public async Task<List<TaskItem>> LoadAsync()
+    public async Task<AppData> LoadAsync()
     {
         if (!File.Exists(_dataFilePath))
         {
-            return new List<TaskItem>();
+            return new AppData();
         }
 
         await using var stream = File.OpenRead(_dataFilePath);
-        var tasks = await JsonSerializer.DeserializeAsync<List<TaskItem>>(stream);
-        return tasks ?? new List<TaskItem>();
+        var appData = await JsonSerializer.DeserializeAsync<AppData>(stream);
+        return appData ?? new AppData();
     }
 
-    public async Task SaveAsync(IEnumerable<TaskItem> tasks)
+    public async Task SaveAsync(AppData appData)
     {
         await using var stream = File.Create(_dataFilePath);
-        await JsonSerializer.SerializeAsync(stream, tasks, new JsonSerializerOptions
+        await JsonSerializer.SerializeAsync(stream, appData, new JsonSerializerOptions
         {
             WriteIndented = true
         });

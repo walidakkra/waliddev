@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using WpfTaskManager.Models;
 using WpfTaskManager.Services;
@@ -9,71 +11,148 @@ namespace WpfTaskManager.ViewModels;
 public class MainViewModel : BaseViewModel
 {
     private readonly JsonStorageService _storageService = new();
-    private string _newTaskTitle = string.Empty;
-    private string _newTaskNotes = string.Empty;
-    private TaskItem? _selectedTask;
+    private readonly ICollectionView _filteredRecordsView;
 
-    public ObservableCollection<TaskItem> Tasks { get; } = new();
+    private string _newEmployeeName = string.Empty;
+    private string _newNotes = string.Empty;
+    private bool _isNewRecordHalfDay;
+    private DateTime _newTravelDate = DateTime.Today;
+    private string _searchText = string.Empty;
+    private decimal _fullDayCost = 80m;
+    private decimal _halfDayCost = 40m;
+    private TransportRecord? _selectedRecord;
 
-    public string NewTaskTitle
+    public ObservableCollection<TransportRecord> Records { get; } = new();
+
+    public ICollectionView FilteredRecords => _filteredRecordsView;
+
+    public string NewEmployeeName
     {
-        get => _newTaskTitle;
+        get => _newEmployeeName;
         set
         {
-            _newTaskTitle = value;
+            _newEmployeeName = value;
             OnPropertyChanged();
-            AddTaskCommandInternal.RaiseCanExecuteChanged();
+            AddRecordCommandInternal.RaiseCanExecuteChanged();
         }
     }
 
-    public string NewTaskNotes
+    public string NewNotes
     {
-        get => _newTaskNotes;
+        get => _newNotes;
         set
         {
-            _newTaskNotes = value;
+            _newNotes = value;
             OnPropertyChanged();
         }
     }
 
-    public TaskItem? SelectedTask
+    public bool IsNewRecordHalfDay
     {
-        get => _selectedTask;
+        get => _isNewRecordHalfDay;
         set
         {
-            _selectedTask = value;
+            _isNewRecordHalfDay = value;
             OnPropertyChanged();
-            ToggleTaskCommandInternal.RaiseCanExecuteChanged();
-            DeleteTaskCommandInternal.RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(NewRecordCostPreview));
         }
     }
 
-    public int TotalCount => Tasks.Count;
-    public int CompletedCount => Tasks.Count(t => t.IsCompleted);
-    public int PendingCount => Tasks.Count(t => !t.IsCompleted);
+    public DateTime NewTravelDate
+    {
+        get => _newTravelDate;
+        set
+        {
+            _newTravelDate = value;
+            OnPropertyChanged();
+        }
+    }
 
-    private RelayCommand AddTaskCommandInternal { get; }
-    private RelayCommand ToggleTaskCommandInternal { get; }
-    private RelayCommand DeleteTaskCommandInternal { get; }
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            OnPropertyChanged();
+            _filteredRecordsView.Refresh();
+        }
+    }
 
-    public ICommand AddTaskCommand => AddTaskCommandInternal;
-    public ICommand ToggleTaskCommand => ToggleTaskCommandInternal;
-    public ICommand DeleteTaskCommand => DeleteTaskCommandInternal;
-    public ICommand ClearCompletedCommand { get; }
+    public decimal FullDayCost
+    {
+        get => _fullDayCost;
+        set
+        {
+            if (value < 0)
+            {
+                return;
+            }
+
+            _fullDayCost = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(NewRecordCostPreview));
+        }
+    }
+
+    public decimal HalfDayCost
+    {
+        get => _halfDayCost;
+        set
+        {
+            if (value < 0)
+            {
+                return;
+            }
+
+            _halfDayCost = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(NewRecordCostPreview));
+        }
+    }
+
+    public decimal NewRecordCostPreview => IsNewRecordHalfDay ? HalfDayCost : FullDayCost;
+
+    public TransportRecord? SelectedRecord
+    {
+        get => _selectedRecord;
+        set
+        {
+            _selectedRecord = value;
+            OnPropertyChanged();
+            DeleteRecordCommandInternal.RaiseCanExecuteChanged();
+        }
+    }
+
+    public decimal TotalCost => Records.Sum(r => r.Cost);
+    public decimal FullDayTotal => Records.Where(r => !r.IsHalfDay).Sum(r => r.Cost);
+    public decimal HalfDayTotal => Records.Where(r => r.IsHalfDay).Sum(r => r.Cost);
+    public int TotalCount => Records.Count;
+
+    private RelayCommand AddRecordCommandInternal { get; }
+    private RelayCommand DeleteRecordCommandInternal { get; }
+
+    public ICommand AddRecordCommand => AddRecordCommandInternal;
+    public ICommand DeleteRecordCommand => DeleteRecordCommandInternal;
+    public ICommand SaveSettingsCommand { get; }
+    public ICommand ClearSearchCommand { get; }
     public ICommand RefreshCommand { get; }
 
     public MainViewModel()
     {
-        AddTaskCommandInternal = new RelayCommand(_ => AddTask(), _ => !string.IsNullOrWhiteSpace(NewTaskTitle));
-        ToggleTaskCommandInternal = new RelayCommand(_ => ToggleSelectedTask(), _ => SelectedTask is not null);
-        DeleteTaskCommandInternal = new RelayCommand(_ => DeleteSelectedTask(), _ => SelectedTask is not null);
-        ClearCompletedCommand = new RelayCommand(_ => ClearCompleted());
+        _filteredRecordsView = CollectionViewSource.GetDefaultView(Records);
+        _filteredRecordsView.Filter = FilterByName;
+
+        AddRecordCommandInternal = new RelayCommand(_ => AddRecord(), _ => !string.IsNullOrWhiteSpace(NewEmployeeName));
+        DeleteRecordCommandInternal = new RelayCommand(_ => DeleteSelectedRecord(), _ => SelectedRecord is not null);
+        SaveSettingsCommand = new RelayCommand(async _ => await SaveSettingsAsync());
+        ClearSearchCommand = new RelayCommand(_ => SearchText = string.Empty);
         RefreshCommand = new RelayCommand(async _ => await LoadAsync());
 
-        Tasks.CollectionChanged += async (_, _) =>
+        Records.CollectionChanged += async (_, _) =>
         {
-            RecalculateCounters();
-            await _storageService.SaveAsync(Tasks);
+            RecalculateTotals();
+            await SaveAllAsync();
         };
     }
 
@@ -82,80 +161,106 @@ public class MainViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    private bool FilterByName(object recordObj)
+    {
+        if (recordObj is not TransportRecord record)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return true;
+        }
+
+        return record.EmployeeName.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase);
+    }
+
     private async Task LoadAsync()
     {
-        var loadedTasks = await _storageService.LoadAsync();
-        Tasks.Clear();
-        foreach (var task in loadedTasks.OrderByDescending(t => t.CreatedAt))
+        var appData = await _storageService.LoadAsync();
+
+        FullDayCost = appData.Settings.FullDayCost <= 0 ? 80m : appData.Settings.FullDayCost;
+        HalfDayCost = appData.Settings.HalfDayCost <= 0 ? 40m : appData.Settings.HalfDayCost;
+
+        Records.Clear();
+        foreach (var record in appData.Records.OrderByDescending(r => r.TravelDate).ThenByDescending(r => r.CreatedAt))
         {
-            Tasks.Add(task);
+            Records.Add(record);
         }
 
-        RecalculateCounters();
+        _filteredRecordsView.Refresh();
+        RecalculateTotals();
     }
 
-    private async void AddTask()
+    private async void AddRecord()
     {
-        var task = new TaskItem
+        var record = new TransportRecord
         {
-            Title = NewTaskTitle.Trim(),
-            Notes = NewTaskNotes.Trim()
+            EmployeeName = NewEmployeeName.Trim(),
+            Notes = NewNotes.Trim(),
+            TravelDate = NewTravelDate.Date,
+            IsHalfDay = IsNewRecordHalfDay,
+            Cost = IsNewRecordHalfDay ? HalfDayCost : FullDayCost
         };
 
-        Tasks.Insert(0, task);
+        Records.Insert(0, record);
 
-        NewTaskTitle = string.Empty;
-        NewTaskNotes = string.Empty;
-        RecalculateCounters();
-        await _storageService.SaveAsync(Tasks);
+        NewEmployeeName = string.Empty;
+        NewNotes = string.Empty;
+        NewTravelDate = DateTime.Today;
+        IsNewRecordHalfDay = false;
+
+        RecalculateTotals();
+        await SaveAllAsync();
     }
 
-    private async void ToggleSelectedTask()
+    private async void DeleteSelectedRecord()
     {
-        if (SelectedTask is null)
+        if (SelectedRecord is null)
         {
             return;
         }
 
-        SelectedTask.IsCompleted = !SelectedTask.IsCompleted;
-        SelectedTask.CompletedAt = SelectedTask.IsCompleted ? DateTime.Now : null;
-        OnPropertyChanged(nameof(Tasks));
-        RecalculateCounters();
-        await _storageService.SaveAsync(Tasks);
+        var current = SelectedRecord;
+        Records.Remove(current);
+        SelectedRecord = null;
+
+        RecalculateTotals();
+        await SaveAllAsync();
     }
 
-    private async void DeleteSelectedTask()
+    private async Task SaveSettingsAsync()
     {
-        if (SelectedTask is null)
+        if (FullDayCost <= 0 || HalfDayCost <= 0)
         {
+            MessageBox.Show("يجب أن تكون الكلفة أكبر من صفر.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        var current = SelectedTask;
-        Tasks.Remove(current);
-        SelectedTask = null;
-        RecalculateCounters();
-        await _storageService.SaveAsync(Tasks);
+        await SaveAllAsync();
+        OnPropertyChanged(nameof(NewRecordCostPreview));
+        MessageBox.Show("تم حفظ الإعدادات بنجاح.", "نجاح", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-    private async void ClearCompleted()
+    private async Task SaveAllAsync()
     {
-        var completed = Tasks.Where(t => t.IsCompleted).ToList();
-        foreach (var item in completed)
+        await _storageService.SaveAsync(new AppData
         {
-            Tasks.Remove(item);
-        }
-
-        SelectedTask = null;
-        RecalculateCounters();
-        await _storageService.SaveAsync(Tasks);
-        MessageBox.Show("تم حذف جميع المهام المكتملة.", "نجاح", MessageBoxButton.OK, MessageBoxImage.Information);
+            Settings = new AppSettings
+            {
+                FullDayCost = FullDayCost,
+                HalfDayCost = HalfDayCost
+            },
+            Records = Records.ToList()
+        });
     }
 
-    private void RecalculateCounters()
+    private void RecalculateTotals()
     {
+        OnPropertyChanged(nameof(TotalCost));
+        OnPropertyChanged(nameof(FullDayTotal));
+        OnPropertyChanged(nameof(HalfDayTotal));
         OnPropertyChanged(nameof(TotalCount));
-        OnPropertyChanged(nameof(CompletedCount));
-        OnPropertyChanged(nameof(PendingCount));
     }
 }

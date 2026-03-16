@@ -1,20 +1,27 @@
-# WpfTaskManager
+# WpfTaskManager (Transport Cost Tracker)
 
-تطبيق WPF كامل (MVP) بلغة C# لإدارة المهام اليومية.
+تطبيق WPF بلغة C# لاحتساب كلفة التنقل اليومية حسب نوع اليوم:
+- يوم كامل: 80 درهم (قابلة للتعديل من الإعدادات)
+- نصف يوم: 40 درهم (قابلة للتعديل من الإعدادات)
 
 ## المزايا
-- إضافة مهمة مع عنوان وملاحظات.
-- عرض المهام في قائمة مع تاريخ الإضافة.
-- تحديد مهمة وتبديل حالتها (مكتملة / غير مكتملة).
-- حذف مهمة محددة.
-- حذف جميع المهام المكتملة.
-- عدادات فورية (إجمالي / مكتملة / متبقية).
-- حفظ تلقائي للبيانات محليًا بصيغة JSON داخل مجلد المستخدم.
+- إضافة سجل تنقل جديد (الاسم، التاريخ، نوع اليوم، ملاحظات).
+- احتساب الكلفة تلقائياً حسب نوع اليوم.
+- بحث مباشر بالاسم.
+- شاشة إعدادات سريعة لتعديل كلفة يوم كامل / نصف يوم.
+- عرض إجماليات فورية:
+  - مجموع كلفة الأيام الكاملة.
+  - مجموع كلفة أنصاف الأيام.
+  - الإجمالي العام بالدرهم.
+- حذف سجل محدد.
+- حفظ تلقائي للبيانات والإعدادات بصيغة JSON.
 
 ## هيكلة المشروع
-- `WpfTaskManager/Models/TaskItem.cs`: نموذج بيانات المهمة.
+- `WpfTaskManager/Models/TransportRecord.cs`: نموذج سجل التنقل.
+- `WpfTaskManager/Models/AppSettings.cs`: إعدادات الكلفة.
+- `WpfTaskManager/Models/AppData.cs`: كائن بيانات التخزين.
 - `WpfTaskManager/Services/JsonStorageService.cs`: التخزين المحلي وقراءة/كتابة JSON.
-- `WpfTaskManager/ViewModels/*`: منطق MVVM والأوامر.
+- `WpfTaskManager/ViewModels/MainViewModel.cs`: منطق MVVM للإضافة/البحث/الاحتساب.
 - `WpfTaskManager/MainWindow.xaml`: واجهة المستخدم.
 
 ## التشغيل
@@ -26,7 +33,5 @@ dotnet restore
 dotnet run
 ```
 
-## ملاحظات تقنية
-- يستخدم نمط MVVM.
-- البيانات تحفظ في:
-  - `%LOCALAPPDATA%/WpfTaskManager/tasks.json`
+## مسار حفظ البيانات
+- `%LOCALAPPDATA%/WpfTaskManager/transport-data.json`

@@ -4,118 +4,115 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="تتبع كلفة التنقل" Height="760" Width="1100" WindowStartupLocation="CenterScreen" Background="#FFF7F7F7"
-        FlowDirection="RightToLeft">
+        Title="Travel Cost Calculator"
+        Height="780"
+        Width="1200"
+        MinHeight="700"
+        MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F7FB">
     <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="تطبيق احتساب كلفة التنقل" FontSize="30" FontWeight="Bold" Foreground="#2B2D42" />
-
-        <Border Grid.Row="1" Margin="0,16,0,12" Padding="14" Background="White" CornerRadius="10" BorderThickness="1" BorderBrush="#FFE3E3E3">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBox Grid.Column="0" Margin="0,0,10,0" Height="38" VerticalContentAlignment="Center" Padding="12,0"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         FontSize="14" ToolTip="ابحث بالاسم" />
-
-                <TextBox Grid.Column="1" Margin="0,0,10,0" Height="38" VerticalContentAlignment="Center" Padding="10,0"
-                         Text="{Binding FullDayCost, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                         ToolTip="كلفة اليوم الكامل" />
-
-                <TextBox Grid.Column="2" Margin="0,0,10,0" Height="38" VerticalContentAlignment="Center" Padding="10,0"
-                         Text="{Binding HalfDayCost, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                         ToolTip="كلفة نصف اليوم" />
-
-                <Button Grid.Column="3" Content="حفظ الإعدادات" Command="{Binding SaveSettingsCommand}" Padding="16,8"
-                        Background="#2B2D42" Foreground="White" BorderThickness="0" Margin="0,0,10,0" />
-
-                <Button Grid.Column="4" Content="مسح البحث" Command="{Binding ClearSearchCommand}" Padding="16,8" Background="#EDF2F4" BorderThickness="0" />
-            </Grid>
+        <Border Grid.Row="0" Padding="16" Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
+            <DockPanel LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="Travel Cost Calculator" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
+                    <TextBlock Text="Manage employee travel records and expenses" FontSize="14" Foreground="#6B7280" Margin="0,4,0,0"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
-        <Border Grid.Row="2" Margin="0,0,0,12" Padding="14" Background="White" CornerRadius="10" BorderThickness="1" BorderBrush="#FFE3E3E3">
+        <Border Grid.Row="1" Margin="0,16,0,16" Padding="18" Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <TextBox Grid.Column="0" Margin="0,0,10,0" Height="40" VerticalContentAlignment="Center" Padding="12,0"
-                         Text="{Binding NewEmployeeName, UpdateSourceTrigger=PropertyChanged}"
-                         FontSize="15" ToolTip="اسم الموظف" />
-
-                <DatePicker Grid.Column="1" Margin="0,0,10,0" SelectedDate="{Binding NewTravelDate, Mode=TwoWay}" Height="40" />
-
-                <CheckBox Grid.Column="2" Content="نصف يوم" IsChecked="{Binding IsNewRecordHalfDay}" VerticalAlignment="Center" FontSize="14" Margin="10,0" />
-
-                <TextBox Grid.Column="3" Margin="0,0,10,0" Height="40" VerticalContentAlignment="Center" Padding="12,0"
-                         Text="{Binding NewNotes, UpdateSourceTrigger=PropertyChanged}"
-                         FontSize="15" ToolTip="ملاحظات" />
-
-                <Button Grid.Column="4" Padding="20,10" Content="إضافة" Command="{Binding AddRecordCommand}"
-                        Background="#118AB2" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
-            </Grid>
-        </Border>
-
-        <Border Grid.Row="3" Background="White" CornerRadius="10" BorderThickness="1" BorderBrush="#FFE3E3E3">
-            <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <ListView Grid.Row="0" ItemsSource="{Binding FilteredRecords}" SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
-                          Margin="14" BorderThickness="0" Background="Transparent">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="الاسم" Width="200" DisplayMemberBinding="{Binding EmployeeName}" />
-                            <GridViewColumn Header="التاريخ" Width="130" DisplayMemberBinding="{Binding TravelDate, StringFormat=d}" />
-                            <GridViewColumn Header="نوع اليوم" Width="100" DisplayMemberBinding="{Binding DayTypeLabel}" />
-                            <GridViewColumn Header="الكلفة" Width="100" DisplayMemberBinding="{Binding Cost, StringFormat=F2}" />
-                            <GridViewColumn Header="الملاحظات" Width="260" DisplayMemberBinding="{Binding Notes}" />
-                            <GridViewColumn Header="أضيف في" Width="170" DisplayMemberBinding="{Binding CreatedAt, StringFormat=g}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Employee Name" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Destination" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="From" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="To" Margin="0,0,8,6" FontWeight="SemiBold"/>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="14">
-                    <Button Content="حذف المحدد" Command="{Binding DeleteRecordCommand}" Margin="0,0,10,0" Padding="16,8" Background="#EF233C" Foreground="White" BorderThickness="0" />
-                    <Button Content="تحديث" Command="{Binding RefreshCommand}" Padding="16,8" Background="#8D99AE" Foreground="White" BorderThickness="0" />
-                </StackPanel>
+                <TextBox x:Name="EmployeeNameTextBox" Grid.Row="1" Grid.Column="0" Margin="0,0,10,12" Padding="10,8"/>
+                <TextBox x:Name="DestinationTextBox" Grid.Row="1" Grid.Column="1" Margin="0,0,10,12" Padding="10,8"/>
+                <TextBox x:Name="FromTextBox" Grid.Row="1" Grid.Column="2" Margin="0,0,10,12" Padding="10,8"/>
+                <TextBox x:Name="ToTextBox" Grid.Row="1" Grid.Column="3" Margin="0,0,0,12" Padding="10,8"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Distance (km)" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="Duration (hours)" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="Travel Type" Margin="0,0,8,6" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="Cost per Travel (MAD)" Margin="0,0,8,6" FontWeight="SemiBold"/>
+
+                <TextBox x:Name="DistanceTextBox" Grid.Row="3" Grid.Column="0" Margin="0,0,10,12" Padding="10,8"/>
+                <TextBox x:Name="DurationTextBox" Grid.Row="3" Grid.Column="1" Margin="0,0,10,12" Padding="10,8"/>
+                <ComboBox x:Name="TravelTypeComboBox" Grid.Row="3" Grid.Column="2" Margin="0,0,10,12" Padding="10,6" SelectionChanged="TravelTypeComboBox_OnSelectionChanged">
+                    <ComboBoxItem Content="Half Day" IsSelected="True"/>
+                    <ComboBoxItem Content="Full Day"/>
+                </ComboBox>
+                <TextBox x:Name="CostTextBox" Grid.Row="3" Grid.Column="3" Margin="0,0,0,12" Padding="10,8" IsReadOnly="True" Background="#F9FAFB"/>
             </Grid>
         </Border>
 
-        <Border Grid.Row="4" Margin="0,12,0,0" Padding="12" Background="#F0F4F8" CornerRadius="8">
-            <WrapPanel>
-                <TextBlock Foreground="#2B2D42" FontSize="14" Margin="0,0,20,0">
-                    <Run Text="عدد السجلات: " /><Run Text="{Binding TotalCount}" />
-                </TextBlock>
-                <TextBlock Foreground="#2B2D42" FontSize="14" Margin="0,0,20,0">
-                    <Run Text="مجموع اليوم الكامل: " /><Run Text="{Binding FullDayTotal, StringFormat=F2}" /><Run Text=" درهم" />
-                </TextBlock>
-                <TextBlock Foreground="#2B2D42" FontSize="14" Margin="0,0,20,0">
-                    <Run Text="مجموع نصف اليوم: " /><Run Text="{Binding HalfDayTotal, StringFormat=F2}" /><Run Text=" درهم" />
-                </TextBlock>
-                <TextBlock Foreground="#0B6E4F" FontSize="15" FontWeight="Bold">
-                    <Run Text="الإجمالي: " /><Run Text="{Binding TotalCost, StringFormat=F2}" /><Run Text=" درهم" />
-                </TextBlock>
-            </WrapPanel>
+        <Border Grid.Row="2" Padding="16" Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                    <Button Content="Add Travel" Width="120" Height="36" Margin="0,0,10,0" Click="AddTravelButton_OnClick" Background="#2563EB" Foreground="White" BorderThickness="0"/>
+                    <Button Content="Delete Selected Travel" Width="170" Height="36" Margin="0,0,10,0" Click="DeleteTravelButton_OnClick" Background="#DC2626" Foreground="White" BorderThickness="0"/>
+                    <Button Content="Clear Fields" Width="120" Height="36" Margin="0,0,10,0" Click="ClearFieldsButton_OnClick" Background="#6B7280" Foreground="White" BorderThickness="0"/>
+                    <Button Content="Calculate Total" Width="130" Height="36" Click="CalculateTotalButton_OnClick" Background="#059669" Foreground="White" BorderThickness="0"/>
+                </StackPanel>
+
+                <DataGrid x:Name="TravelsDataGrid"
+                          Grid.Row="1"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          BorderBrush="#E5E7EB"
+                          BorderThickness="1">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Employee Name" Binding="{Binding EmployeeName}" Width="*"/>
+                        <DataGridTextColumn Header="From" Binding="{Binding FromLocation}" Width="*"/>
+                        <DataGridTextColumn Header="To" Binding="{Binding ToLocation}" Width="*"/>
+                        <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"/>
+                        <DataGridTextColumn Header="Distance" Binding="{Binding Distance, StringFormat={}{0:N2} km}" Width="130"/>
+                        <DataGridTextColumn Header="Duration" Binding="{Binding Duration, StringFormat={}{0:N2} h}" Width="120"/>
+                        <DataGridTextColumn Header="Travel Type" Binding="{Binding TravelType}" Width="120"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat={}{0:N2} MAD}" Width="130"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="3" Margin="0,16,0,0" Padding="14" Background="#EEF2FF" CornerRadius="12" BorderBrush="#C7D2FE" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Total cost for selected employee:" FontWeight="SemiBold" Foreground="#1F2937"/>
+                <TextBlock x:Name="EmployeeTotalTextBlock" Text="0.00 MAD" Margin="6,0,24,0" FontWeight="Bold" Foreground="#1D4ED8"/>
+                <TextBlock Text="Total cost of all travels:" FontWeight="SemiBold" Foreground="#1F2937"/>
+                <TextBlock x:Name="GrandTotalTextBlock" Text="0.00 MAD" Margin="6,0,0,0" FontWeight="Bold" Foreground="#047857"/>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>
